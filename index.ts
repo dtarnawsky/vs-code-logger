@@ -4,6 +4,14 @@ let _error: Function;
 let _info: Function;
 let _deviceIdentifier: string;
 let _serverUrl: string;
+let _pending: Array<LogItem> = undefined;
+
+interface LogItem {
+    id: string;
+    message: string;
+    level: string;
+    stack: string;
+}
 
 /**
  * Initialize logging will override window.console and send to the serverUrl
@@ -31,14 +39,14 @@ export function initLogger(serverUrl: string) {
     setInterval(() => {
         if (document.location.href != lastUrl) {
             lastUrl = document.location.href;
-            this.log(`Url changed to ${lastUrl}`);
+            _log(`Url changed to ${lastUrl}`);
         }
     }, 1000);
 }
 
 function getDeviceIdentifier(): string {
     if (_deviceIdentifier) {
-        return _deviceIdentifier.toString();
+        return _deviceIdentifier;
     }
     const tmp = localStorage.IonicLoggerDeviceId;
     let id: number = parseInt(tmp);
@@ -47,8 +55,8 @@ function getDeviceIdentifier(): string {
         id = Math.floor(Math.random() * 999999999);
         localStorage.IonicLoggerDeviceId = id;
     }
-    this._deviceIdentifier = id;
-    return id.toString();
+    _deviceIdentifier = id.toString();
+    return _deviceIdentifier;
 }
 
 function write(message, _arguments, level) {
@@ -67,15 +75,15 @@ function write(message, _arguments, level) {
     // Commenting out for now. Stack is hard as it may be in the source map
     //const stack = this.getStack();
 
-    if (!this.pending) {
+    if (!_pending) {
+        _pending = [];
         setTimeout(() => {
-            // Push pending log entries. We wait around for 1 second to see how much accumulates
-            post('/log', this.pending);
-            this.pending = undefined;
-        }, 500);
-        this.pending = [];
+            // Push pending log entries. We wait around for 500ms to see how much accumulates
+            post('/log', _pending);
+            _pending = undefined;
+        }, 500);        
     }
-    this.pending.push({ id: this.getDeviceIdentifier(), message: msg, level: level, stack: undefined }); // this.getStack() });
+    _pending.push({ id: getDeviceIdentifier(), message: msg, level: level, stack: undefined }); // this.getStack() });
 }
 
 function getStack(): string {
