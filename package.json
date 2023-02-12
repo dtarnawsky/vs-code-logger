@@ -1,5 +1,5 @@
 {
-  "name": "vs-ionic-log",
+  "name": "remote-log",
   "version": "1.0.0",
   "description": "Add remote logging to your web application",
   "main": "index.js",
