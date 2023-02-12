@@ -58,7 +58,7 @@ function getDeviceIdentifier(): string {
     return _deviceIdentifier;
 }
 
-function write(message, _arguments, level) {
+function write(message: any, _arguments: any, level: string) {
     const args = Array.prototype.slice.call(_arguments);
     let msg = message;
     args.forEach((element) => {
@@ -113,22 +113,22 @@ function post(url: string, data: any) {
     }
 }
 
-function consoleLog(message, ...args) {
+function consoleLog(message: any, ...args: any) {
     _log(message, ...args);
     write(message, args, 'log');
 }
 
-function consoleWarn(message, ...args) {
+function consoleWarn(message: any, ...args: any) {
     _warn(message, ...args);
     write(message, args, 'warn');
 }
 
-function consoleError(message, ...args) {
+function consoleError(message: any, ...args: any) {
     _error(message, ...args);
     write(message, args, 'error');
 }
 
-function consoleInfo(message, ...args) {
+function consoleInfo(message: any, ...args: any) {
     _info(message, ...args);
     write(message, args, 'info');
 }
