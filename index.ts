@@ -4,13 +4,12 @@ let _error: Function;
 let _info: Function;
 let _deviceIdentifier: string;
 let _serverUrl: string;
-let _pending: Array<LogItem> = undefined;
+let _pending: Array<LogItem> | undefined = undefined;
 
 interface LogItem {
     id: string;
     message: string;
     level: string;
-    stack: string;
 }
 
 /**
@@ -83,7 +82,7 @@ function write(message, _arguments, level) {
             _pending = undefined;
         }, 500);        
     }
-    _pending.push({ id: getDeviceIdentifier(), message: msg, level: level, stack: undefined }); // this.getStack() });
+    _pending.push({ id: getDeviceIdentifier(), message: msg, level: level }); // this.getStack() });
 }
 
 function getStack(): string {
@@ -115,21 +114,21 @@ function post(url: string, data: any) {
 }
 
 function consoleLog(message, ...args) {
-    _log.call(this, message, ...args);
+    _log(message, ...args);
     write(message, args, 'log');
 }
 
 function consoleWarn(message, ...args) {
-    _warn.call(this, message, ...args);
+    _warn(message, ...args);
     write(message, args, 'warn');
 }
 
 function consoleError(message, ...args) {
-    _error.call(this, message, ...args);
+    _error(message, ...args);
     write(message, args, 'error');
 }
 
 function consoleInfo(message, ...args) {
-    _info.call(this, message, ...args);
+    _info(message, ...args);
     write(message, args, 'info');
 }

@@ -1,1 +1,117 @@
-"use strict";var _log,_warn,_error,_info,_deviceIdentifier,_serverUrl,__spreadArray=this&&this.__spreadArray||function(e,o,r){if(r||2===arguments.length)for(var n,t=0,i=o.length;t<i;t++)!n&&t in o||((n=n||Array.prototype.slice.call(o,0,t))[t]=o[t]);return e.concat(n||Array.prototype.slice.call(o))},_pending=(exports.__esModule=!0,exports.initLogger=void 0);function initLogger(e){var o;_log=window.console.log,_warn=window.console.error,_error=window.console.error,_info=window.console.info,_serverUrl=e,window.console.log=consoleLog,window.console.warn=consoleWarn,window.console.error=consoleError,window.console.info=consoleInfo,post("/devices",{id:getDeviceIdentifier(),agent:window.navigator.userAgent,title:window.document.title}),setInterval(function(){document.location.href!=o&&(o=document.location.href,_log("Url changed to ".concat(o)))},1e3)}function getDeviceIdentifier(){var e,o;return _deviceIdentifier||(e=localStorage.IonicLoggerDeviceId,o=parseInt(e),null!=e&&!isNaN(o)||(o=Math.floor(999999999*Math.random()),localStorage.IonicLoggerDeviceId=o),_deviceIdentifier=o.toString()),_deviceIdentifier}function write(e,o,r){var o=Array.prototype.slice.call(o),n=e;o.forEach(function(e){""!=n&&(n+=" "),n+="object"==typeof e?JSON.stringify(e):e}),_pending||(_pending=[],setTimeout(function(){post("/log",_pending),_pending=void 0},500)),_pending.push({id:getDeviceIdentifier(),message:n,level:r,stack:void 0})}function getStack(){var e=(new Error).stack,e=null==e?void 0:e.split("\n");return null!=e&&e.splice(0,4),e&&0!=e.length?e[0].substr(7,e[0].length-7):""}function post(e,o){if(o)try{fetch("http://".concat(_serverUrl).concat(e),{method:"post",headers:{"Content-Type":"application/json"},body:JSON.stringify(o)})}catch(e){}}function consoleLog(e){for(var o=[],r=1;r<arguments.length;r++)o[r-1]=arguments[r];_log.call.apply(_log,__spreadArray([this,e],o,!1)),write(e,o,"log")}function consoleWarn(e){for(var o=[],r=1;r<arguments.length;r++)o[r-1]=arguments[r];_warn.call.apply(_warn,__spreadArray([this,e],o,!1)),write(e,o,"warn")}function consoleError(e){for(var o=[],r=1;r<arguments.length;r++)o[r-1]=arguments[r];_error.call.apply(_error,__spreadArray([this,e],o,!1)),write(e,o,"error")}function consoleInfo(e){for(var o=[],r=1;r<arguments.length;r++)o[r-1]=arguments[r];_info.call.apply(_info,__spreadArray([this,e],o,!1)),write(e,o,"info")}exports.initLogger=initLogger;
+let _log;
+let _warn;
+let _error;
+let _info;
+let _deviceIdentifier;
+let _serverUrl;
+let _pending = undefined;
+/**
+ * Initialize logging will override window.console and send to the serverUrl
+ * @param  {string} serverUrl The servername and port number of the remote server (eg 192.168.1.1:9000)
+ */
+export function initLogger(serverUrl) {
+    _log = window.console.log;
+    _warn = window.console.error;
+    _error = window.console.error;
+    _info = window.console.info;
+    _serverUrl = serverUrl;
+    window.console.log = consoleLog;
+    window.console.warn = consoleWarn;
+    window.console.error = consoleError;
+    window.console.info = consoleInfo;
+    let lastUrl;
+    post('/devices', {
+        id: getDeviceIdentifier(),
+        agent: window.navigator.userAgent,
+        title: window.document.title,
+    });
+    // Report urls
+    setInterval(() => {
+        if (document.location.href != lastUrl) {
+            lastUrl = document.location.href;
+            _log(`Url changed to ${lastUrl}`);
+        }
+    }, 1000);
+}
+function getDeviceIdentifier() {
+    if (_deviceIdentifier) {
+        return _deviceIdentifier;
+    }
+    const tmp = localStorage.IonicLoggerDeviceId;
+    let id = parseInt(tmp);
+    if (tmp == null || isNaN(id)) {
+        // Create a random device identifier
+        id = Math.floor(Math.random() * 999999999);
+        localStorage.IonicLoggerDeviceId = id;
+    }
+    _deviceIdentifier = id.toString();
+    return _deviceIdentifier;
+}
+function write(message, _arguments, level) {
+    const args = Array.prototype.slice.call(_arguments);
+    let msg = message;
+    args.forEach((element) => {
+        if (msg != '') {
+            msg += ' ';
+        }
+        if (typeof element == 'object') {
+            msg += JSON.stringify(element);
+        }
+        else {
+            msg += element;
+        }
+    });
+    // Commenting out for now. Stack is hard as it may be in the source map
+    //const stack = this.getStack();
+    if (!_pending) {
+        _pending = [];
+        setTimeout(() => {
+            // Push pending log entries. We wait around for 500ms to see how much accumulates
+            post('/log', _pending);
+            _pending = undefined;
+        }, 500);
+    }
+    _pending.push({ id: getDeviceIdentifier(), message: msg, level: level }); // this.getStack() });
+}
+function getStack() {
+    const stack = new Error().stack;
+    const lines = stack === null || stack === void 0 ? void 0 : stack.split('\n');
+    lines === null || lines === void 0 ? void 0 : lines.splice(0, 4);
+    if (!lines || lines.length == 0) {
+        return '';
+    }
+    return lines[0].substr(7, lines[0].length - 7); // This returns just the top of the stack
+}
+function post(url, data) {
+    if (!data) {
+        return;
+    }
+    try {
+        fetch(`http://${_serverUrl}${url}`, {
+            method: 'post',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        });
+    }
+    catch (_a) {
+        // Logging should not cause failures
+    }
+}
+function consoleLog(message, ...args) {
+    _log(message, ...args);
+    write(message, args, 'log');
+}
+function consoleWarn(message, ...args) {
+    _warn(message, ...args);
+    write(message, args, 'warn');
+}
+function consoleError(message, ...args) {
+    _error(message, ...args);
+    write(message, args, 'error');
+}
+function consoleInfo(message, ...args) {
+    _info(message, ...args);
+    write(message, args, 'info');
+}

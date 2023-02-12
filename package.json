@@ -2,7 +2,7 @@
   "name": "vs-ionic-log",
   "version": "1.0.0",
   "description": "Add remote logging to your web application",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
     "build": "tsc index.ts && uglifyjs --compress --mangle -o index.js -- index.js",
     "build-dev": "tsc index.ts"
